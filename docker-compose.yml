@@ -1,0 +1,14 @@
+version: '3'
+services:
+    final-project:
+        build:
+            context: .
+            dockerfile: ./DockerfileDev
+        container_name: final-project
+        restart: always
+        ports:
+            - '8008:80'
+        volumes:
+            - .:/app
+        environment:
+            - TZ=Europe/Moscow
