@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
-	"os"
 
+	"github.com/genboo/final_project/api"
+	"github.com/genboo/final_project/cache"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -16,9 +17,10 @@ func init() {
 }
 
 func main() {
-	gin.SetMode(os.Getenv("gin_mode"))
+	gin.SetMode("release")
 	server := gin.Default()
-	API.Init(server)
+	cache.Init("image_cache")
+	api.Init(server)
 	err := server.Run(":80")
 	if err != nil {
 		log.Println(err)

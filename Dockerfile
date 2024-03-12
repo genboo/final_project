@@ -1,4 +1,4 @@
-FROM registry.temocenter.ru:80/internal/docker/dockerhub:go1.20-1-latest as builder
+FROM golang:1.20.4 as builder
 WORKDIR /build
 COPY go.mod .
 RUN go mod download
