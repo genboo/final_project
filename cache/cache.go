@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -23,6 +24,10 @@ const (
 	extension = ".jpg"
 )
 
+var (
+	ErrNotFound = errors.New("изображение не найдено")
+)
+
 type Params struct {
 	Url    string
 	Width  int
@@ -38,20 +43,14 @@ type imageCache struct {
 var ImageCache *imageCache
 var httpClient = client()
 
-func Init(cacheDir string) {
+func Init(cacheDir string, capacity int) {
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		err = os.Mkdir(cacheDir, 0755)
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}
-
-	val, err := strconv.Atoi(os.Getenv("max_cache_capacity"))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Printf("capacity: %d\n", val)
-	c := NewCache(val)
+	c := NewCache(capacity)
 	c.OnEvicted = removeFile
 	ImageCache = &imageCache{
 		cache:    c,
@@ -64,8 +63,6 @@ func Init(cacheDir string) {
 			if !file.IsDir() {
 				key := strings.TrimRight(file.Name(), extension)
 				ImageCache.cache.Set(key, filepath.Join(cacheDir, file.Name()))
-				log.Println(key)
-				log.Println(filepath.Join(cacheDir, file.Name()))
 			}
 		}
 	}
@@ -77,7 +74,6 @@ func (ic *imageCache) GetImage(header http.Header, params Params) ([]byte, error
 	hash, _ := common.Hash(fmt.Sprintf("%d-%d-%s", params.Width, params.Height, params.Url))
 	cacheKey := strconv.FormatUint(hash, 10)
 	if data, ok := ic.cache.Get(cacheKey); ok {
-		log.Println("from cache")
 		file, err := os.Open(data.(string))
 		defer file.Close()
 		if err != nil {
@@ -85,7 +81,7 @@ func (ic *imageCache) GetImage(header http.Header, params Params) ([]byte, error
 		}
 		return io.ReadAll(file)
 	}
-	log.Println("recreate")
+
 	req, err := http.NewRequest(http.MethodGet, params.Url, nil)
 	if err != nil {
 		return nil, err
@@ -100,6 +96,13 @@ func (ic *imageCache) GetImage(header http.Header, params Params) ([]byte, error
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, ErrNotFound
+		}
+		return nil, errors.New(resp.Status)
+	}
 
 	srcImage, _, err := image.Decode(resp.Body)
 	if err != nil {
@@ -128,9 +131,8 @@ func (ic *imageCache) GetImage(header http.Header, params Params) ([]byte, error
 	return buf.Bytes(), nil
 }
 
-func removeFile(_ Key, value interface{}) {
+func removeFile(value interface{}) {
 	err := os.Remove(value.(string))
-	log.Printf("remove %s\f", value.(string))
 	if err != nil {
 		log.Println(err)
 	}

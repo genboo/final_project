@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCache(t *testing.T) {
+func TestLru(t *testing.T) {
 	t.Run("empty cache", func(t *testing.T) {
 		c := NewCache(10)
 
@@ -51,9 +51,9 @@ func TestCache(t *testing.T) {
 
 	t.Run("purge logic", func(t *testing.T) {
 		c := NewCache(3)
-		var purgedKey Key
-		c.OnEvicted = func(key Key, value interface{}) {
-			purgedKey = key
+		var purgedValue interface{}
+		c.OnEvicted = func(value interface{}) {
+			purgedValue = value
 		}
 		c.Set("aaa", 10)
 		c.Set("bbb", 20)
@@ -62,8 +62,8 @@ func TestCache(t *testing.T) {
 		val, ok := c.Get("aaa")
 		require.False(t, ok)
 		require.Nil(t, val)
-		require.NotNil(t, purgedKey)
-		require.Equal(t, purgedKey, "aaa")
+		require.NotNil(t, purgedValue)
+		require.Equal(t, purgedValue, 10)
 
 		c.Get("bbb")
 		c.Get("ddd")
@@ -75,7 +75,7 @@ func TestCache(t *testing.T) {
 	})
 }
 
-func TestCacheMultithreading(t *testing.T) {
+func TestLruMultithreading(t *testing.T) {
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)

@@ -11,7 +11,7 @@ type Cache struct {
 	capacity  int
 	queue     List
 	items     map[Key]*ListItem
-	OnEvicted func(Key, interface{})
+	OnEvicted func(interface{})
 }
 
 func NewCache(capacity int) *Cache {
@@ -39,7 +39,7 @@ func (lc *Cache) Set(key Key, value interface{}) bool {
 			for k, v := range lc.items {
 				if v == lc.queue.Back() {
 					if lc.OnEvicted != nil {
-						lc.OnEvicted(k, v.Value)
+						lc.OnEvicted(v.Value)
 					}
 					lc.queue.Remove(v)
 					delete(lc.items, k)

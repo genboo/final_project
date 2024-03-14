@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,10 +31,17 @@ func preview(c *gin.Context) {
 	params := c.MustGet(contextParams).(cache.Params)
 	image, err := cache.ImageCache.GetImage(c.Request.Header, params)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		if errors.Is(err, cache.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+		} else {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
 		return
 	}
-	c.Writer.Write(image)
+	_, err = c.Writer.Write(image)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func validate(c *gin.Context) {
