@@ -7,9 +7,12 @@ import (
 
 	"github.com/genboo/final_project/api"
 	"github.com/genboo/final_project/cache"
-	"github.com/genboo/final_project/common"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+)
+
+const (
+	DefaultCacheDir = "image_cache"
 )
 
 func init() {
@@ -30,7 +33,7 @@ func main() {
 	}
 	gin.SetMode("release")
 	server := gin.Default()
-	cache.Init(common.DefaultCacheDir, val)
+	cache.Init(DefaultCacheDir, val)
 	api.Init(server)
 	err = server.Run(":80")
 	if err != nil {

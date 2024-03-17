@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
-	"github.com/genboo/final_project/common"
+	"github.com/genboo/final_project/hash"
 )
 
 const (
@@ -71,8 +71,8 @@ func Init(cacheDir string, capacity int) {
 func (ic *imageCache) GetImage(header http.Header, params Params) ([]byte, error) {
 	ic.mu.Lock()
 	defer ic.mu.Unlock()
-	hash, _ := common.Hash(fmt.Sprintf("%d-%d-%s", params.Width, params.Height, params.Url))
-	cacheKey := strconv.FormatUint(hash, 10)
+	h, _ := hash.Make(fmt.Sprintf("%d-%d-%s", params.Width, params.Height, params.Url))
+	cacheKey := strconv.FormatUint(h, 10)
 	if data, ok := ic.cache.Get(cacheKey); ok {
 		file, err := os.Open(data.(string))
 		defer file.Close()
