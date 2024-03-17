@@ -10,4 +10,4 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder main /bin/main
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 WORKDIR /bin
-ENTRYPOINT ["/bin/main"]
+RUN make run
