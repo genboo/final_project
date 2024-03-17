@@ -7,7 +7,7 @@ import (
 type Key interface{}
 
 type Cache struct {
-	sync.Mutex
+	lock      sync.Mutex
 	capacity  int
 	queue     List
 	items     map[Key]*ListItem
@@ -16,6 +16,7 @@ type Cache struct {
 
 func NewCache(capacity int) *Cache {
 	return &Cache{
+		lock:     sync.Mutex{},
 		capacity: capacity,
 		queue:    NewList(),
 		items:    make(map[Key]*ListItem, capacity),
@@ -23,8 +24,8 @@ func NewCache(capacity int) *Cache {
 }
 
 func (lc *Cache) Set(key Key, value interface{}) bool {
-	lc.Lock()
-	defer lc.Unlock()
+	lc.lock.Lock()
+	defer lc.lock.Unlock()
 	val, ok := lc.items[key]
 	if ok {
 		// если элемент уже был, обновить значение и переместить в начало
@@ -52,8 +53,8 @@ func (lc *Cache) Set(key Key, value interface{}) bool {
 }
 
 func (lc *Cache) Get(key Key) (interface{}, bool) {
-	lc.Lock()
-	defer lc.Unlock()
+	lc.lock.Lock()
+	defer lc.lock.Unlock()
 	val, ok := lc.items[key]
 	// если нашелся, переместить в начало
 	if ok {

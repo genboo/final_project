@@ -3,7 +3,7 @@ services:
     final-project:
         build:
             context: .
-            dockerfile: ./Dockerfile
+            dockerfile: ./DockerfileDev
         container_name: final-project
         restart: always
         ports:
